@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,8 @@ import Auth from "./pages/Auth";
 import InstructorDashboard from "./pages/instructorDashboard/InstructorDashboard";
 import CourseEditor from "./pages/instructorDashboard/CourseEditor";
 import StudentDashboard from "./pages/studentDashboard/StudentDashboard";
+import StudentCourseView from "./pages/studentDashboard/StudentCourseView";
+import CoursePlayer from "./pages/studentDashboard/CoursePlayer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +37,8 @@ const App = () => (
           
           {/* Student Routes */}
           <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/courses/:courseId" element={<StudentCourseView />} />
+          <Route path="/course/:courseId/lesson/:lessonId" element={<CoursePlayer />} />
           
           {/* Catch-all Not Found route */}
           <Route path="*" element={<NotFound />} />
