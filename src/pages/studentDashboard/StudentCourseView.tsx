@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 
 const StudentCourseView = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -38,15 +39,44 @@ const StudentCourseView = () => {
 
   // Handle course enrollment
   const handleEnroll = async () => {
-    const { error } = await supabase
-      .from('enrollments')
-      .insert({ 
-        course_id: courseId, 
-        student_id: supabase.auth.user()?.id 
-      });
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to enroll in a course.",
+        });
+        return;
+      }
 
-    if (!error) {
+      const { error } = await supabase
+        .from('enrollments')
+        .insert({ 
+          course_id: courseId, 
+          student_id: sessionData.session.user.id 
+        });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+        return;
+      }
+
       setEnrolled(true);
+      toast({
+        title: "Success",
+        description: "You have successfully enrolled in this course!",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "@/components/ui/use-toast";
 
 const CoursePlayer = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -30,14 +31,23 @@ const CoursePlayer = () => {
   // Mutation to mark lesson as complete
   const markLessonCompleteMutation = useMutation({
     mutationFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from('enrollments')
         .update({ completed_at: new Date().toISOString() })
         .eq('course_id', courseId)
-        .eq('student_id', supabase.auth.user()?.id);
+        .eq('student_id', sessionData.session.user.id);
 
       if (error) throw error;
       setIsLessonCompleted(true);
+      toast({
+        title: "Success",
+        description: "Lesson marked as complete!",
+      });
     }
   });
 
