@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronLeft, Save, Image, File, Plus, Trash2, Link as LinkIcon, Youtube, Pencil, Settings } from "lucide-react";
+import { ChevronLeft, Save, Image, File, Plus, Trash2, Link as LinkIcon, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const CourseEditor = () => {
@@ -223,10 +223,11 @@ const CourseEditor = () => {
                       <Button 
                         key={lesson.id} 
                         variant={activeLesson === lesson.id ? "default" : "outline"}
-                        className="w-full justify-start"
+                        className="w
+
+-full justify-start"
                         onClick={() => setActiveLesson(lesson.id)}
                       >
-                        <Pencil className="h-4 w-4 mr-2" />
                         {lesson.title}
                       </Button>
                     ))}

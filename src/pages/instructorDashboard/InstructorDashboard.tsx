@@ -4,7 +4,7 @@ import CoursesSidebar from "@/components/layout/CoursesSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { BarChart, Users, BookOpen, Plus, ArrowRight, Clock, Settings } from "lucide-react";
+import { BarChart, Users, BookOpen, Plus, ArrowRight, Clock } from "lucide-react";
 
 const InstructorDashboard = () => {
   // Sample data for demonstration
@@ -77,7 +77,7 @@ const InstructorDashboard = () => {
         </div>
 
         {/* Recent Courses */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle>Recent Courses</CardTitle>
@@ -142,12 +142,6 @@ const InstructorDashboard = () => {
                 <Link to="/instructor/analytics">
                   <BarChart className="h-4 w-4 mr-2" />
                   View Analytics
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link to="/instructor/settings">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Account Settings
                 </Link>
               </Button>
             </CardContent>
