@@ -1,11 +1,32 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Menu, X, LogIn, Book, User, Laptop } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, LogIn, Book, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isInstructor } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out successfully",
+      });
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error logging out",
+        description: error.message
+      });
+    }
+  };
 
   return (
     <header className="w-full h-16 bg-white border-b border-border sticky top-0 z-50">
@@ -24,15 +45,31 @@ const Navbar = () => {
             About
           </Link>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Log in
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/signup">Sign up</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Log out
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to={isInstructor ? "/instructor" : "/student"}>
+                    Dashboard
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Log in
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/auth?signup=true">Sign up</Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
 
@@ -65,17 +102,39 @@ const Navbar = () => {
               About
             </Link>
             <hr className="my-2" />
-            <Link
-              to="/login"
-              className="px-4 py-2 hover:bg-accent rounded-md transition flex items-center"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <LogIn className="h-4 w-4 mr-2" />
-              Log in
-            </Link>
-            <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-              <Button className="w-full">Sign up</Button>
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to={isInstructor ? "/instructor" : "/student"}
+                  className="px-4 py-2 hover:bg-accent rounded-md transition"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Button 
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  className="px-4 py-2 hover:bg-accent rounded-md transition flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Log in
+                </Link>
+                <Link to="/auth?signup=true" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full">Sign up</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

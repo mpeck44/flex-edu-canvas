@@ -5,7 +5,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,8 +12,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const CoursesSidebar = () => {
+  const { isInstructor } = useAuth();
+
   const instructorMenuItems = [
     {
       title: "Dashboard",
@@ -61,42 +63,28 @@ const CoursesSidebar = () => {
     },
   ];
 
+  const menuItems = isInstructor ? instructorMenuItems : studentMenuItems;
+
   return (
     <>
       <Sidebar>
         <SidebarContent>
-          <div className="p-4">
-            <Button className="w-full flex items-center justify-center" asChild>
-              <Link to="/instructor/courses/new">
-                <Plus className="h-4 w-4 mr-2" />
-                New Course
-              </Link>
-            </Button>
-          </div>
+          {isInstructor && (
+            <div className="p-4">
+              <Button className="w-full flex items-center justify-center" asChild>
+                <Link to="/instructor/courses/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Course
+                </Link>
+              </Button>
+            </div>
+          )}
           
           <SidebarGroup>
-            <SidebarGroupLabel>Instructor</SidebarGroupLabel>
+            <SidebarGroupLabel>{isInstructor ? "Instructor" : "Student"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {instructorMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.url} className="flex items-center">
-                        <item.icon className="h-5 w-5 mr-3" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          
-          <SidebarGroup>
-            <SidebarGroupLabel>Student</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {studentMenuItems.map((item) => (
+                {menuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <Link to={item.url} className="flex items-center">
