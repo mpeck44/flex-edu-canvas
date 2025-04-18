@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  SidebarGroupLabel, // Add this import
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -107,3 +108,4 @@ const CoursesSidebar = () => {
 };
 
 export default CoursesSidebar;
+
