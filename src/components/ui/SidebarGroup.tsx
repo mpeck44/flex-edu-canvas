@@ -17,4 +17,15 @@ const SidebarGroupContent = React.forwardRef<HTMLDivElement, React.HTMLAttribute
 );
 SidebarGroupContent.displayName = "SidebarGroupContent";
 
-export { SidebarGroup, SidebarGroupContent };
+const SidebarGroupLabel = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div 
+      ref={ref} 
+      className={cn("text-xs font-semibold uppercase text-muted-foreground px-4 py-2 tracking-wide", className)} 
+      {...props} 
+    />
+  )
+);
+SidebarGroupLabel.displayName = "SidebarGroupLabel";
+
+export { SidebarGroup, SidebarGroupContent, SidebarGroupLabel };

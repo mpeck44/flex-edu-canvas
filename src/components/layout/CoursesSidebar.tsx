@@ -1,9 +1,11 @@
+
 import { Home, BookOpen, Users, Settings, BarChart, Plus, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -48,9 +50,9 @@ const CoursesSidebar = () => {
           )}
 
           <SidebarGroup>
-            <div className="text-xs font-semibold uppercase text-muted-foreground px-4 py-2 tracking-wide">
+            <SidebarGroupLabel>
               {isInstructor ? "Instructor" : "Student"}
-            </div>
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => (
@@ -68,7 +70,7 @@ const CoursesSidebar = () => {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <div className="hidden md:block absolute top-4 left-4 z-40">
+      <div className="md:hidden absolute top-4 left-4 z-40">
         <SidebarTrigger />
       </div>
     </>
