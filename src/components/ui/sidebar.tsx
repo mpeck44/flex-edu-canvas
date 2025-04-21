@@ -3,4 +3,4 @@
 export * from "./SidebarContext";
 export * from "./SidebarGroup";
 export * from "./SidebarMenu";
-export * from "./Sidebar";
+export * from "./SidebarMain"; // Changed from "./Sidebar" to "./SidebarMain"
