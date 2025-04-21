@@ -1,4 +1,3 @@
-
 import { Home, BookOpen, Users, Settings, BarChart, Plus, User } from "lucide-react";
 import {
   Sidebar,
@@ -8,8 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  SidebarGroupLabel, // Add this import
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -19,49 +17,17 @@ const CoursesSidebar = () => {
   const { isInstructor } = useAuth();
 
   const instructorMenuItems = [
-    {
-      title: "Dashboard",
-      url: "/instructor",
-      icon: Home,
-    },
-    {
-      title: "My Courses",
-      url: "/instructor/courses",
-      icon: BookOpen,
-    },
-    {
-      title: "Students",
-      url: "/instructor/students",
-      icon: Users,
-    },
-    {
-      title: "Analytics",
-      url: "/instructor/analytics",
-      icon: BarChart,
-    },
-    {
-      title: "Settings",
-      url: "/instructor/settings",
-      icon: Settings,
-    },
+    { title: "Dashboard", url: "/instructor", icon: Home },
+    { title: "My Courses", url: "/instructor/courses", icon: BookOpen },
+    { title: "Students", url: "/instructor/students", icon: Users },
+    { title: "Analytics", url: "/instructor/analytics", icon: BarChart },
+    { title: "Settings", url: "/instructor/settings", icon: Settings }
   ];
 
   const studentMenuItems = [
-    {
-      title: "Dashboard",
-      url: "/student",
-      icon: Home,
-    },
-    {
-      title: "My Courses",
-      url: "/student/courses",
-      icon: BookOpen,
-    },
-    {
-      title: "Profile",
-      url: "/student/profile",
-      icon: User,
-    },
+    { title: "Dashboard", url: "/student", icon: Home },
+    { title: "My Courses", url: "/student/courses", icon: BookOpen },
+    { title: "Profile", url: "/student/profile", icon: User }
   ];
 
   const menuItems = isInstructor ? instructorMenuItems : studentMenuItems;
@@ -80,9 +46,11 @@ const CoursesSidebar = () => {
               </Button>
             </div>
           )}
-          
+
           <SidebarGroup>
-            <SidebarGroupLabel>{isInstructor ? "Instructor" : "Student"}</SidebarGroupLabel>
+            <div className="text-xs font-semibold uppercase text-muted-foreground px-4 py-2 tracking-wide">
+              {isInstructor ? "Instructor" : "Student"}
+            </div>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => (
@@ -108,4 +76,3 @@ const CoursesSidebar = () => {
 };
 
 export default CoursesSidebar;
-
