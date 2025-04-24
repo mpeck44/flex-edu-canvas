@@ -5,7 +5,7 @@ import CoursesSidebar from "@/components/layout/CoursesSidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CourseDetailsForm } from "@/components/course/CourseDetailsForm";
 import { LessonsSidebar } from "@/components/course/LessonsSidebar";
@@ -18,6 +18,7 @@ const CourseEditor = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("details");
+  const [isSaving, setIsSaving] = useState(false);
   
   // Course details state
   const [courseDetails, setCourseDetails] = useState({
@@ -51,30 +52,41 @@ const CourseEditor = () => {
     }
 
     try {
+      setIsSaving(true);
+      
       if (!user) {
         toast({
           title: "Authentication error",
           description: "You must be logged in to save a course.",
           variant: "destructive",
         });
+        setIsSaving(false);
         return;
       }
 
+      console.log("Saving course with instructor ID:", user.id);
+      console.log("Course details:", courseDetails);
+      
       // Save course to Supabase
       const { data, error } = await supabase
         .from('courses')
         .insert([
           { 
             title: courseDetails.title,
-            description: courseDetails.description,
+            description: courseDetails.description || null,
             instructor_id: user.id,
             // We could add other fields like category and level here
           }
         ])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving course:", error);
+        throw error;
+      }
 
+      console.log("Course saved successfully:", data);
+      
       toast({
         title: "Course saved",
         description: "Your course has been saved successfully.",
@@ -89,6 +101,8 @@ const CourseEditor = () => {
         description: "Failed to save course. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -187,6 +201,17 @@ const CourseEditor = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-6 flex justify-end">
+          <Button 
+            onClick={handleSaveCourse} 
+            disabled={isSaving}
+            className="w-full md:w-auto"
+          >
+            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isSaving ? 'Saving...' : 'Save Course'}
+          </Button>
+        </div>
       </main>
     </MainLayout>
   );

@@ -24,13 +24,20 @@ const InstructorCourses = () => {
 
       try {
         setLoading(true);
+        console.log("Fetching courses for instructor:", user.id);
+        
         const { data, error } = await supabase
           .from('courses')
           .select('*')
           .eq('instructor_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching courses:", error);
+          throw error;
+        }
+        
+        console.log("Fetched courses:", data);
         
         // Transform the data to match our UI format
         const formattedCourses = data.map(course => ({
