@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { ChevronLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CourseDetailsForm } from "@/components/course/CourseDetailsForm";
 import { LessonsSidebar } from "@/components/course/LessonsSidebar";
 import { LessonEditor } from "@/components/course/LessonEditor";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CourseEditor = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("details");
   
   // Course details state
@@ -36,7 +40,7 @@ const CourseEditor = () => {
     { id: "1", type: "text", content: "Welcome to the course! This is a sample lesson content.", order: 1 }
   ]);
 
-  const handleSaveCourse = () => {
+  const handleSaveCourse = async () => {
     if (!courseDetails.title) {
       toast({
         title: "Missing information",
@@ -46,10 +50,46 @@ const CourseEditor = () => {
       return;
     }
 
-    toast({
-      title: "Course saved",
-      description: "Your course has been saved successfully.",
-    });
+    try {
+      if (!user) {
+        toast({
+          title: "Authentication error",
+          description: "You must be logged in to save a course.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Save course to Supabase
+      const { data, error } = await supabase
+        .from('courses')
+        .insert([
+          { 
+            title: courseDetails.title,
+            description: courseDetails.description,
+            instructor_id: user.id,
+            // We could add other fields like category and level here
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: "Course saved",
+        description: "Your course has been saved successfully.",
+      });
+      
+      // Navigate to the instructor courses page after saving
+      navigate('/instructor/courses');
+    } catch (error) {
+      console.error("Error saving course:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save course. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddLesson = () => {
@@ -101,7 +141,7 @@ const CourseEditor = () => {
       <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/instructor">
+            <Link to="/instructor/courses">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Back
             </Link>
