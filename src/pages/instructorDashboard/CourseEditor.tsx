@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import CoursesSidebar from "@/components/layout/CoursesSidebar";
@@ -64,6 +65,12 @@ const CourseEditor = () => {
         return;
       }
 
+      console.log("Attempting to save course with details:", {
+        title: courseDetails.title,
+        category: courseDetails.category,
+        level: courseDetails.level
+      });
+
       const course = await createCourse(courseDetails, user.id);
       console.log("Course saved successfully:", course);
       
@@ -75,9 +82,15 @@ const CourseEditor = () => {
       navigate('/instructor/courses');
     } catch (error) {
       console.error("Error saving course:", error);
+      let errorMessage = "Failed to save course. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to save course. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
