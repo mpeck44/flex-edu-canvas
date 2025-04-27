@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import CoursesSidebar from "@/components/layout/CoursesSidebar";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { CourseDetailsForm } from "@/components/course/CourseDetailsForm";
 import { LessonsSidebar } from "@/components/course/LessonsSidebar";
 import { LessonEditor } from "@/components/course/LessonEditor";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { createCourse } from "@/services/courseService";
+import type { CourseDetails } from "@/services/courseService";
 
 const CourseEditor = () => {
   const { toast } = useToast();
@@ -22,7 +22,7 @@ const CourseEditor = () => {
   const [isSaving, setIsSaving] = useState(false);
   
   // Course details state
-  const [courseDetails, setCourseDetails] = useState({
+  const [courseDetails, setCourseDetails] = useState<CourseDetails>({
     title: "",
     description: "",
     category: "",
@@ -61,45 +61,17 @@ const CourseEditor = () => {
           description: "You must be logged in to save a course.",
           variant: "destructive",
         });
-        setIsSaving(false);
         return;
       }
 
-      console.log("Saving course with instructor ID:", user.id);
-      console.log("Course details:", courseDetails);
-      
-      // For debugging purposes, log the user object
-      console.log("Current user:", user);
-      
-      // Create the course data object to insert
-      const courseData = { 
-        title: courseDetails.title,
-        description: courseDetails.description || null,
-        instructor_id: user.id,
-        is_published: false // Default to unpublished
-      };
-      
-      console.log("Course data to be inserted:", courseData);
-      
-      // Save course to Supabase
-      const { data, error } = await supabase
-        .from('courses')
-        .insert([courseData])
-        .select();
-
-      if (error) {
-        console.error("Error saving course:", error);
-        throw error;
-      }
-
-      console.log("Course saved successfully:", data);
+      const course = await createCourse(courseDetails, user.id);
+      console.log("Course saved successfully:", course);
       
       toast({
         title: "Course saved",
         description: "Your course has been saved successfully.",
       });
       
-      // Navigate to the instructor courses page after saving
       navigate('/instructor/courses');
     } catch (error) {
       console.error("Error saving course:", error);
