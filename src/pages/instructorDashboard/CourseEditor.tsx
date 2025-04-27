@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import CoursesSidebar from "@/components/layout/CoursesSidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { CourseDetailsForm } from "@/components/course/CourseDetailsForm";
 import { LessonsSidebar } from "@/components/course/LessonsSidebar";
 import { LessonEditor } from "@/components/course/LessonEditor";
@@ -17,6 +17,7 @@ const CourseEditor = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { courseId } = useParams();
   const [activeTab, setActiveTab] = useState("details");
   const [isSaving, setIsSaving] = useState(false);
   
@@ -67,17 +68,23 @@ const CourseEditor = () => {
       console.log("Saving course with instructor ID:", user.id);
       console.log("Course details:", courseDetails);
       
+      // For debugging purposes, log the user object
+      console.log("Current user:", user);
+      
+      // Create the course data object to insert
+      const courseData = { 
+        title: courseDetails.title,
+        description: courseDetails.description || null,
+        instructor_id: user.id,
+        is_published: false // Default to unpublished
+      };
+      
+      console.log("Course data to be inserted:", courseData);
+      
       // Save course to Supabase
       const { data, error } = await supabase
         .from('courses')
-        .insert([
-          { 
-            title: courseDetails.title,
-            description: courseDetails.description || null,
-            instructor_id: user.id,
-            // We could add other fields like category and level here
-          }
-        ])
+        .insert([courseData])
         .select();
 
       if (error) {
