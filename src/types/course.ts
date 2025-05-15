@@ -62,5 +62,5 @@ export const convertLessonContentToJson = (content: LessonContent[]): Json => {
   }));
   
   // Cast the result to Json type since we know the structure is compatible
-  return jsonContent as unknown as Json;
+  return jsonContent as Json;
 };
