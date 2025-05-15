@@ -19,6 +19,7 @@ export type Database = {
           instructor_id: string
           is_published: boolean
           level: string | null
+          published: boolean
           status: string
           title: string
           updated_at: string
@@ -32,6 +33,7 @@ export type Database = {
           instructor_id: string
           is_published?: boolean
           level?: string | null
+          published?: boolean
           status?: string
           title: string
           updated_at?: string
@@ -45,6 +47,7 @@ export type Database = {
           instructor_id?: string
           is_published?: boolean
           level?: string | null
+          published?: boolean
           status?: string
           title?: string
           updated_at?: string
@@ -65,6 +68,7 @@ export type Database = {
           course_id: string
           enrolled_at: string
           id: string
+          progress_json: Json | null
           student_id: string
         }
         Insert: {
@@ -72,6 +76,7 @@ export type Database = {
           course_id: string
           enrolled_at?: string
           id?: string
+          progress_json?: Json | null
           student_id: string
         }
         Update: {
@@ -79,6 +84,7 @@ export type Database = {
           course_id?: string
           enrolled_at?: string
           id?: string
+          progress_json?: Json | null
           student_id?: string
         }
         Relationships: [
@@ -139,6 +145,7 @@ export type Database = {
           course_id: string | null
           created_at: string
           id: string
+          order_index: number
           position: number
           title: string
           updated_at: string
@@ -148,6 +155,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           id?: string
+          order_index?: number
           position?: number
           title: string
           updated_at?: string
@@ -157,6 +165,7 @@ export type Database = {
           course_id?: string | null
           created_at?: string
           id?: string
+          order_index?: number
           position?: number
           title?: string
           updated_at?: string

@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { createCourse, createLesson } from "@/services/courseService";
+import { createCourse, createLesson, updateCoursePublishStatus, updateLesson } from "@/services/courseService";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,11 @@ export const CourseSaveButton = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { courseDetails, lessons } = useCourseContext();
+  const { 
+    courseDetails, 
+    lessons, 
+    isExistingCourse 
+  } = useCourseContext();
 
   const handleSaveCourse = async () => {
     if (!courseDetails.title) {
@@ -40,24 +43,56 @@ export const CourseSaveButton = () => {
       console.log("Attempting to save course with details:", {
         title: courseDetails.title,
         category: courseDetails.category,
-        level: courseDetails.level
+        level: courseDetails.level,
+        published: courseDetails.published
       });
 
-      // Step 1: Create the course
-      const courseId = await createCourse(courseDetails, user.id);
-      console.log("Course saved successfully with ID:", courseId);
-      
-      // Step 2: Create each lesson for the course
-      const savedLessonsPromises = lessons.map(lesson => 
-        createLesson(courseId, {
-          title: lesson.title,
-          content: lesson.content,
-          position: lesson.position
-        })
-      );
-      
-      await Promise.all(savedLessonsPromises);
-      console.log("All lessons saved successfully");
+      if (isExistingCourse) {
+        // For existing courses, only update the lessons
+        // We'll handle course updates separately
+        // TODO: Implement update course details functionality
+        
+        // Save each lesson
+        const savedLessonsPromises = lessons.map(lesson => {
+          if (lesson.id.startsWith('temp-')) {
+            // New lesson - create it
+            return createLesson(window.location.pathname.split('/').pop()!, {
+              title: lesson.title,
+              content: lesson.content,
+              order_index: lesson.order_index
+            });
+          } else {
+            // Existing lesson - update it
+            return updateLesson(lesson.id, {
+              title: lesson.title,
+              content: lesson.content,
+              order_index: lesson.order_index
+            });
+          }
+        });
+        
+        await Promise.all(savedLessonsPromises);
+        console.log("All lessons saved successfully");
+        
+      } else {
+        // Step 1: Create the course
+        const courseId = await createCourse(courseDetails, user.id);
+        console.log("Course saved successfully with ID:", courseId);
+        
+        // Step 2: Create each lesson for the course
+        const sortedLessons = [...lessons].sort((a, b) => a.order_index - b.order_index);
+        
+        const savedLessonsPromises = sortedLessons.map((lesson, index) => 
+          createLesson(courseId, {
+            title: lesson.title,
+            content: lesson.content,
+            order_index: index
+          })
+        );
+        
+        await Promise.all(savedLessonsPromises);
+        console.log("All lessons saved successfully");
+      }
       
       toast({
         title: "Course saved",

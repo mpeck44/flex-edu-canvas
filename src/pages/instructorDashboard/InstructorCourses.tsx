@@ -17,9 +17,9 @@ interface Course {
   id: string;
   title: string;
   students?: number;
-  lessons?: number;
-  published: boolean;
-  lastUpdated: string;
+  lessons_count?: number;
+  is_published: boolean;
+  updated_at: string;
 }
 
 const InstructorCourses = () => {
@@ -48,9 +48,9 @@ const InstructorCourses = () => {
           id: course.id,
           title: course.title,
           students: 0, // We'll need another query to count enrolled students
-          lessons: course.lessons?.length || 0,
-          published: course.is_published || false,
-          lastUpdated: new Date(course.updated_at).toLocaleDateString()
+          lessons_count: course.lessons_count || 0,
+          is_published: course.is_published || false,
+          updated_at: new Date(course.updated_at).toLocaleDateString()
         }));
 
         setCourses(formattedCourses);
@@ -134,15 +134,15 @@ const InstructorCourses = () => {
                     <TableRow key={course.id}>
                       <TableCell className="font-medium">{course.title}</TableCell>
                       <TableCell>
-                        {course.published ? (
+                        {course.is_published ? (
                           <Badge className="bg-green-500 hover:bg-green-700">Published</Badge>
                         ) : (
                           <Badge variant="outline">Draft</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-center">{course.students || 0}</TableCell>
-                      <TableCell className="text-center">{course.lessons || 0}</TableCell>
-                      <TableCell>{course.lastUpdated}</TableCell>
+                      <TableCell className="text-center">{course.lessons_count || 0}</TableCell>
+                      <TableCell>{course.updated_at}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button variant="ghost" size="icon" asChild>
                           <Link to={`/courses/${course.id}`}>

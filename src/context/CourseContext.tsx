@@ -1,12 +1,15 @@
 
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { CourseDetails, Lesson as LessonType, LessonContent } from "@/services/courseService";
+import { useParams } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { getCourseById, getLessonsByCourseId } from "@/services/courseService";
 
 interface Lesson {
   id: string;
   title: string;
   content: LessonContent[];
-  position: number;
+  order_index: number;
 }
 
 interface CourseContextType {
@@ -23,6 +26,8 @@ interface CourseContextType {
   updateBlockContent: (id: string, content: string) => void;
   deleteBlock: (id: string) => void;
   updateLessonTitle: (title: string) => void;
+  reorderLessons: (sourceIndex: number, destinationIndex: number) => void;
+  isExistingCourse: boolean;
 }
 
 export const CourseContext = createContext<CourseContextType | undefined>(undefined);
@@ -32,49 +37,99 @@ interface CourseProviderProps {
 }
 
 export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const isExistingCourse = !!courseId && courseId !== 'new';
+  
   const [courseDetails, setCourseDetails] = useState<CourseDetails>({
     title: "",
     description: "",
     category: "",
     level: "",
     featuredImage: null,
+    published: false
   });
 
   const [lessons, setLessons] = useState<Lesson[]>([
     { 
-      id: "1", 
+      id: "temp-1", 
       title: "Introduction", 
       content: [{ id: "block-1", type: "text", content: "Welcome to the course! This is a sample lesson content." }], 
-      position: 1 
+      order_index: 0
     },
   ]);
   
-  const [activeLesson, setActiveLesson] = useState("1");
+  const [activeLesson, setActiveLesson] = useState("temp-1");
   
   const [contentBlocks, setContentBlocks] = useState<LessonContent[]>([
     { id: "block-1", type: "text", content: "Welcome to the course! This is a sample lesson content." }
   ]);
+
+  // Load existing course data if editing
+  useEffect(() => {
+    if (isExistingCourse) {
+      const loadCourseData = async () => {
+        try {
+          const courseData = await getCourseById(courseId);
+          
+          setCourseDetails({
+            title: courseData.title,
+            description: courseData.description,
+            category: courseData.category,
+            level: courseData.level,
+            featuredImage: courseData.featured_image,
+            published: courseData.is_published
+          });
+          
+          if (courseData.lessons && courseData.lessons.length > 0) {
+            // Format lessons data from the API
+            const formattedLessons = courseData.lessons.map(lesson => ({
+              id: lesson.id,
+              title: lesson.title,
+              content: lesson.content as LessonContent[] || [],
+              order_index: lesson.order_index
+            }));
+            
+            setLessons(formattedLessons);
+            setActiveLesson(formattedLessons[0].id);
+            setContentBlocks(formattedLessons[0].content || []);
+          }
+        } catch (error) {
+          console.error("Error loading course:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load course data",
+            variant: "destructive"
+          });
+        }
+      };
+      
+      loadCourseData();
+    }
+  }, [courseId, isExistingCourse]);
+
+  // Update content blocks when active lesson changes
+  useEffect(() => {
+    const lesson = lessons.find(l => l.id === activeLesson);
+    if (lesson) {
+      setContentBlocks(lesson.content || []);
+    }
+  }, [activeLesson, lessons]);
 
   const updateCourseDetails = (field: keyof CourseDetails, value: any) => {
     setCourseDetails(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddLesson = () => {
+    const maxOrder = Math.max(...lessons.map(l => l.order_index), -1);
     const newLesson = {
-      id: `lesson-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       title: `Lesson ${lessons.length + 1}`,
       content: [{ id: `block-${Date.now()}`, type: "text", content: "" }],
-      position: lessons.length + 1
+      order_index: maxOrder + 1
     };
     setLessons([...lessons, newLesson]);
     setActiveLesson(newLesson.id);
-    
-    // Clear content blocks when switching to a new lesson
-    setContentBlocks([{ 
-      id: `block-${Date.now()}`, 
-      type: "text", 
-      content: "" 
-    }]);
+    setContentBlocks(newLesson.content);
   };
 
   const handleAddContentBlock = (type: string) => {
@@ -84,30 +139,30 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
       content: ""
     };
     setContentBlocks([...contentBlocks, newBlock]);
+    
+    // Update lesson content immediately
+    const updatedLessons = lessons.map(lesson => 
+      lesson.id === activeLesson 
+        ? { ...lesson, content: [...contentBlocks, newBlock] } 
+        : lesson
+    );
+    setLessons(updatedLessons);
   };
 
   const updateBlockContent = (id: string, content: string) => {
     // Update the content blocks
-    setContentBlocks(
-      contentBlocks.map(block => 
-        block.id === id ? { ...block, content } : block
-      )
+    const updatedBlocks = contentBlocks.map(block => 
+      block.id === id ? { ...block, content } : block
     );
+    setContentBlocks(updatedBlocks);
     
     // Also update the lesson content
-    const currentLesson = lessons.find(lesson => lesson.id === activeLesson);
-    if (currentLesson) {
-      const updatedLessons = lessons.map(lesson => 
-        lesson.id === activeLesson 
-          ? { ...lesson, content: contentBlocks.map(block => 
-              block.id === id 
-                ? { ...block, content } 
-                : block
-            )} 
-          : lesson
-      );
-      setLessons(updatedLessons);
-    }
+    const updatedLessons = lessons.map(lesson => 
+      lesson.id === activeLesson 
+        ? { ...lesson, content: updatedBlocks } 
+        : lesson
+    );
+    setLessons(updatedLessons);
   };
 
   const deleteBlock = (id: string) => {
@@ -135,7 +190,7 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
       // Update the lesson content
       const updatedLessons = lessons.map(lesson => 
         lesson.id === activeLesson 
-          ? { ...lesson, content: lesson.content.filter(block => block.id !== id) } 
+          ? { ...lesson, content: updatedBlocks } 
           : lesson
       );
       setLessons(updatedLessons);
@@ -146,6 +201,22 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
     setLessons(lessons.map(lesson =>
       lesson.id === activeLesson ? { ...lesson, title } : lesson
     ));
+  };
+
+  const reorderLessons = (sourceIndex: number, destinationIndex: number) => {
+    if (sourceIndex === destinationIndex) return;
+    
+    const reorderedLessons = [...lessons];
+    const [movedLesson] = reorderedLessons.splice(sourceIndex, 1);
+    reorderedLessons.splice(destinationIndex, 0, movedLesson);
+    
+    // Update order indices
+    const updatedLessons = reorderedLessons.map((lesson, index) => ({
+      ...lesson,
+      order_index: index
+    }));
+    
+    setLessons(updatedLessons);
   };
 
   return (
@@ -162,7 +233,9 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
       handleAddContentBlock,
       updateBlockContent,
       deleteBlock,
-      updateLessonTitle
+      updateLessonTitle,
+      reorderLessons,
+      isExistingCourse
     }}>
       {children}
     </CourseContext.Provider>

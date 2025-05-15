@@ -8,6 +8,7 @@ export interface CourseDetails {
   category: string;
   level: string;
   featuredImage: string | null;
+  published: boolean;
 }
 
 export interface LessonContent {
@@ -20,7 +21,8 @@ export interface Lesson {
   id?: string;
   title: string;
   content: LessonContent[];
-  position: number;
+  order_index: number;
+  course_id?: string;
 }
 
 // Helper function to convert LessonContent to JSON
@@ -32,26 +34,28 @@ export const createCourse = async (courseDetails: CourseDetails, instructorId: s
   console.log("Creating course with details:", courseDetails);
   
   try {
-    // Use RPC to call a stored function that bypasses RLS policies
-    const { data, error } = await supabase.rpc(
-      'create_course',
-      {
-        p_title: courseDetails.title,
-        p_description: courseDetails.description,
-        p_instructor_id: instructorId,
-        p_category: courseDetails.category,
-        p_level: courseDetails.level,
-        p_is_published: false
-      }
-    );
+    // Creating an empty course shell first
+    const { data, error } = await supabase
+      .from('courses')
+      .insert({
+        title: courseDetails.title,
+        description: courseDetails.description,
+        instructor_id: instructorId,
+        category: courseDetails.category,
+        level: courseDetails.level,
+        is_published: courseDetails.published,
+        status: courseDetails.published ? 'published' : 'draft'
+      })
+      .select('id')
+      .single();
 
     if (error) {
-      console.error("Error in create_course RPC:", error);
+      console.error("Error in create_course:", error);
       throw error;
     }
     
-    console.log("Course created successfully with ID:", data);
-    return data;
+    console.log("Course created successfully with ID:", data.id);
+    return data.id;
   } catch (error) {
     console.error("Failed to create course:", error);
     throw error;
@@ -68,7 +72,7 @@ export const createLesson = async (courseId: string, lesson: Lesson) => {
         course_id: courseId,
         title: lesson.title,
         content: convertLessonContentToJson(lesson.content),
-        position: lesson.position
+        order_index: lesson.order_index
       })
       .select()
       .single();
@@ -90,7 +94,7 @@ export const updateLesson = async (lessonId: string, updates: Partial<Lesson>) =
     const updateData: any = {};
     
     if (updates.title) updateData.title = updates.title;
-    if (updates.position) updateData.position = updates.position;
+    if (updates.order_index !== undefined) updateData.order_index = updates.order_index;
     if (updates.content) updateData.content = convertLessonContentToJson(updates.content);
     
     const { data, error } = await supabase
@@ -118,7 +122,7 @@ export const getLessonsByCourseId = async (courseId: string) => {
       .from('lessons')
       .select('*')
       .eq('course_id', courseId)
-      .order('position');
+      .order('order_index');
       
     if (error) {
       console.error("Error fetching lessons:", error);
@@ -134,19 +138,34 @@ export const getLessonsByCourseId = async (courseId: string) => {
 
 export const getCourseById = async (courseId: string) => {
   try {
-    // Use the direct table access with RLS policies applied
-    const { data, error } = await supabase
+    // Get the course first
+    const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('*, lessons(*)')
+      .select('*')
       .eq('id', courseId)
       .single();
       
-    if (error) {
-      console.error("Error fetching course by ID:", error);
-      throw error;
+    if (courseError) {
+      console.error("Error fetching course by ID:", courseError);
+      throw courseError;
     }
     
-    return data;
+    // Then get the lessons
+    const { data: lessons, error: lessonsError } = await supabase
+      .from('lessons')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('order_index');
+    
+    if (lessonsError) {
+      console.error("Error fetching course lessons:", lessonsError);
+      throw lessonsError;
+    }
+    
+    return {
+      ...course,
+      lessons: lessons || []
+    };
   } catch (error) {
     console.error("Failed to get course by ID:", error);
     throw error;
@@ -157,10 +176,9 @@ export const getCoursesByInstructor = async (instructorId: string) => {
   try {
     console.log("Fetching courses for instructor:", instructorId);
     
-    // Directly fetch instructor's courses using the RLS policy
     const { data, error } = await supabase
       .from('courses')
-      .select('*, lessons(*)')
+      .select('*')
       .eq('instructor_id', instructorId)
       .order('created_at', { ascending: false });
 
@@ -169,9 +187,133 @@ export const getCoursesByInstructor = async (instructorId: string) => {
       throw error;
     }
     
-    return data || [];
+    // Get lessons count for each course
+    const coursesWithLessonCount = await Promise.all(
+      (data || []).map(async (course) => {
+        const { count, error } = await supabase
+          .from('lessons')
+          .select('*', { count: 'exact', head: true })
+          .eq('course_id', course.id);
+        
+        if (error) {
+          console.error("Error counting lessons:", error);
+          return { ...course, lessons_count: 0 };
+        }
+        
+        return { ...course, lessons_count: count || 0 };
+      })
+    );
+    
+    return coursesWithLessonCount;
   } catch (error) {
     console.error("Failed to fetch instructor courses:", error);
+    throw error;
+  }
+};
+
+export const updateCoursePublishStatus = async (courseId: string, isPublished: boolean) => {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .update({ 
+        is_published: isPublished,
+        status: isPublished ? 'published' : 'draft'
+      })
+      .eq('id', courseId)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error updating course publish status:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Failed to update course publish status:", error);
+    throw error;
+  }
+};
+
+export const enrollStudentInCourse = async (courseId: string, studentId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('enrollments')
+      .insert({ 
+        course_id: courseId, 
+        student_id: studentId,
+        progress_json: {} 
+      })
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error enrolling student:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Failed to enroll student:", error);
+    throw error;
+  }
+};
+
+export const updateLessonProgress = async (enrollmentId: string, lessonId: string, completed: boolean) => {
+  try {
+    // First get the current progress
+    const { data: enrollment, error: getError } = await supabase
+      .from('enrollments')
+      .select('progress_json')
+      .eq('id', enrollmentId)
+      .single();
+    
+    if (getError) {
+      console.error("Error fetching enrollment:", getError);
+      throw getError;
+    }
+    
+    // Update the progress JSON
+    const progressJson = enrollment.progress_json || {};
+    progressJson[lessonId] = { completed, completed_at: completed ? new Date().toISOString() : null };
+    
+    // Save the updated progress
+    const { data, error } = await supabase
+      .from('enrollments')
+      .update({ progress_json: progressJson })
+      .eq('id', enrollmentId)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error updating lesson progress:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Failed to update lesson progress:", error);
+    throw error;
+  }
+};
+
+export const getStudentEnrollment = async (courseId: string, studentId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('*')
+      .eq('course_id', courseId)
+      .eq('student_id', studentId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows returned
+      console.error("Error fetching student enrollment:", error);
+      throw error;
+    }
+    
+    return data || null;
+  } catch (error) {
+    console.error("Failed to get student enrollment:", error);
     throw error;
   }
 };
