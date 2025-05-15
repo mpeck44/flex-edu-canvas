@@ -1,88 +1,112 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { CourseDetails, Lesson, LessonContent, transformToLessonContent, convertLessonContentToJson } from "@/types/course";
 import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { getCourseById } from "@/services/courseService";
-import { CourseDetails, Lesson, LessonContent, transformToLessonContent } from "@/types/course";
 
 export const useCourseLoader = () => {
   const { courseId } = useParams<{ courseId: string }>();
-  const isExistingCourse = !!courseId && courseId !== 'new';
+  const [isExistingCourse, setIsExistingCourse] = useState<boolean>(false);
   
+  // Course details state
   const [courseDetails, setCourseDetails] = useState<CourseDetails>({
     title: "",
     description: "",
     category: "",
-    level: "",
+    level: "beginner",
     featuredImage: null,
     published: false
   });
-
-  const [lessons, setLessons] = useState<Lesson[]>([
-    { 
-      id: "temp-1", 
-      title: "Introduction", 
-      content: [{ id: "block-1", type: "text", content: "Welcome to the course! This is a sample lesson content." }], 
-      order_index: 0
-    },
-  ]);
   
-  const [activeLesson, setActiveLesson] = useState("temp-1");
-  
-  const [contentBlocks, setContentBlocks] = useState<LessonContent[]>([
-    { id: "block-1", type: "text", content: "Welcome to the course! This is a sample lesson content." }
-  ]);
+  // Lessons state
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [activeLesson, setActiveLesson] = useState<string>("");
+  const [contentBlocks, setContentBlocks] = useState<LessonContent[]>([]);
 
-  // Load existing course data if editing
+  // Load course data if editing existing course
   useEffect(() => {
-    if (isExistingCourse) {
-      const loadCourseData = async () => {
-        try {
-          const courseData = await getCourseById(courseId);
-          
-          setCourseDetails({
-            title: courseData.title,
-            description: courseData.description || "",
-            category: courseData.category || "",
-            level: courseData.level || "",
-            featuredImage: courseData.featured_image,
-            published: courseData.is_published
-          });
-          
-          if (courseData.lessons && courseData.lessons.length > 0) {
-            // Format lessons data from the API
-            const formattedLessons = courseData.lessons.map(lesson => ({
-              id: lesson.id,
-              title: lesson.title,
-              content: transformToLessonContent(lesson.content),
-              order_index: lesson.order_index
-            }));
-            
-            setLessons(formattedLessons);
-            setActiveLesson(formattedLessons[0].id);
-            setContentBlocks(transformToLessonContent(formattedLessons[0].content));
-          }
-        } catch (error) {
-          console.error("Error loading course:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load course data",
-            variant: "destructive"
-          });
+    const loadCourseData = async () => {
+      if (!courseId) return;
+
+      try {
+        // Load course details
+        const { data: course, error: courseError } = await supabase
+          .from("courses")
+          .select("*")
+          .eq("id", courseId)
+          .single();
+
+        if (courseError) throw courseError;
+
+        setCourseDetails({
+          title: course.title || "",
+          description: course.description || "",
+          category: course.category || "",
+          level: course.level || "beginner",
+          featuredImage: course.featured_image || null,
+          published: course.is_published || false
+        });
+
+        // Load lessons
+        const { data: lessonData, error: lessonError } = await supabase
+          .from("lessons")
+          .select("*")
+          .eq("course_id", courseId)
+          .order("order_index");
+
+        if (lessonError) throw lessonError;
+
+        const formattedLessons: Lesson[] = lessonData.map((lesson: any) => ({
+          id: lesson.id,
+          title: lesson.title,
+          content: transformToLessonContent(lesson.content),
+          order_index: lesson.order_index
+        }));
+
+        setLessons(formattedLessons);
+        
+        if (formattedLessons.length > 0) {
+          setActiveLesson(formattedLessons[0].id);
+          // Use the transformToLessonContent helper function for type safety
+          setContentBlocks(transformToLessonContent(formattedLessons[0].content));
         }
-      };
-      
-      loadCourseData();
-    }
-  }, [courseId, isExistingCourse]);
+
+        setIsExistingCourse(true);
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to load course data"
+        });
+      }
+    };
+
+    loadCourseData();
+  }, [courseId]);
 
   // Update content blocks when active lesson changes
   useEffect(() => {
-    const lesson = lessons.find(l => l.id === activeLesson);
-    if (lesson) {
-      setContentBlocks(lesson.content || []);
+    if (activeLesson && lessons.length > 0) {
+      const lesson = lessons.find(l => l.id === activeLesson);
+      if (lesson) {
+        setContentBlocks(lesson.content || []);
+      }
     }
   }, [activeLesson, lessons]);
+
+  // Save content blocks back to lessons when they change
+  useEffect(() => {
+    if (activeLesson && contentBlocks) {
+      setLessons(prev =>
+        prev.map(lesson =>
+          lesson.id === activeLesson
+            ? { ...lesson, content: contentBlocks }
+            : lesson
+        )
+      );
+    }
+  }, [contentBlocks, activeLesson]);
 
   return {
     courseDetails,

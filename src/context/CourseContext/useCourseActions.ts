@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { CourseDetails, Lesson, LessonContent } from "@/types/course";
+import { convertLessonContentToJson } from "@/services/course/types";
 
 export const useCourseActions = (
   courseDetails: CourseDetails,
@@ -12,107 +13,59 @@ export const useCourseActions = (
   setContentBlocks: React.Dispatch<React.SetStateAction<LessonContent[]>>
 ) => {
   const updateCourseDetails = (field: keyof CourseDetails, value: any) => {
-    setCourseDetails(prev => ({ ...prev, [field]: value }));
+    setCourseDetails(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   const handleAddLesson = () => {
-    const maxOrder = Math.max(...lessons.map(l => l.order_index), -1);
-    const newLesson = {
-      id: `temp-${Date.now()}`,
-      title: `Lesson ${lessons.length + 1}`,
-      content: [{ id: `block-${Date.now()}`, type: "text", content: "" }],
-      order_index: maxOrder + 1
+    const newLesson: Lesson = {
+      id: `new-lesson-${Date.now()}`,
+      title: "New Lesson",
+      content: [],
+      order_index: lessons.length
     };
-    setLessons([...lessons, newLesson]);
-    setActiveLesson(newLesson.id);
-    setContentBlocks(newLesson.content);
+    setLessons(prev => [...prev, newLesson]);
+    // No need to call setActiveLesson here - it's passed as a prop and used directly
   };
 
   const handleAddContentBlock = (type: string) => {
-    const newBlock = {
+    const newBlock: LessonContent = {
       id: `block-${Date.now()}`,
       type,
-      content: ""
+      content: type === "text" ? "Enter text here..." : "",
     };
-    setContentBlocks([...contentBlocks, newBlock]);
-    
-    // Update lesson content immediately
-    const updatedLessons = lessons.map(lesson => 
-      lesson.id === activeLesson 
-        ? { 
-            ...lesson, 
-            content: [...contentBlocks, newBlock]
-          } 
-        : lesson
-    );
-    setLessons(updatedLessons);
+    setContentBlocks(prev => [...prev, newBlock]);
   };
 
   const updateBlockContent = (id: string, content: string) => {
-    // Update the content blocks
-    const updatedBlocks = contentBlocks.map(block => 
-      block.id === id ? { ...block, content } : block
+    setContentBlocks(prev =>
+      prev.map(block => (block.id === id ? { ...block, content } : block))
     );
-    setContentBlocks(updatedBlocks);
-    
-    // Also update the lesson content
-    const updatedLessons = lessons.map(lesson => 
-      lesson.id === activeLesson 
-        ? { ...lesson, content: updatedBlocks } 
-        : lesson
-    );
-    setLessons(updatedLessons);
   };
 
   const deleteBlock = (id: string) => {
-    if (contentBlocks.length <= 1) {
-      // Don't delete the last block, just clear it
-      const emptyBlock = { 
-        id: contentBlocks[0].id, 
-        type: "text", 
-        content: "" 
-      };
-      setContentBlocks([emptyBlock]);
-      
-      // Update the lesson content
-      const updatedLessons = lessons.map(lesson => 
-        lesson.id === activeLesson 
-          ? { ...lesson, content: [emptyBlock] } 
-          : lesson
-      );
-      setLessons(updatedLessons);
-    } else {
-      // Filter out the deleted block
-      const updatedBlocks = contentBlocks.filter(block => block.id !== id);
-      setContentBlocks(updatedBlocks);
-      
-      // Update the lesson content
-      const updatedLessons = lessons.map(lesson => 
-        lesson.id === activeLesson 
-          ? { ...lesson, content: updatedBlocks } 
-          : lesson
-      );
-      setLessons(updatedLessons);
-    }
+    setContentBlocks(prev => prev.filter(block => block.id !== id));
   };
 
   const updateLessonTitle = (title: string) => {
-    setLessons(lessons.map(lesson =>
-      lesson.id === activeLesson ? { ...lesson, title } : lesson
-    ));
+    setLessons(prev =>
+      prev.map(lesson =>
+        lesson.id === activeLesson ? { ...lesson, title } : lesson
+      )
+    );
   };
 
   const reorderLessons = (sourceIndex: number, destinationIndex: number) => {
-    if (sourceIndex === destinationIndex) return;
+    const reordered = Array.from(lessons);
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(destinationIndex, 0, removed);
     
-    const reorderedLessons = [...lessons];
-    const [movedLesson] = reorderedLessons.splice(sourceIndex, 1);
-    reorderedLessons.splice(destinationIndex, 0, movedLesson);
-    
-    // Update order indices
-    const updatedLessons = reorderedLessons.map((lesson, index) => ({
+    // Update order_index values
+    const updatedLessons = reordered.map((lesson, idx) => ({
       ...lesson,
-      order_index: index
+      order_index: idx
     }));
     
     setLessons(updatedLessons);
@@ -125,6 +78,6 @@ export const useCourseActions = (
     updateBlockContent,
     deleteBlock,
     updateLessonTitle,
-    reorderLessons
+    reorderLessons,
   };
 };
