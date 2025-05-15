@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { createCourse, createLesson, updateCoursePublishStatus, updateLesson } from "@/services/courseService";
+import { createCourse, createLesson, updateLesson, updateCoursePublishStatus } from "@/services/courseService";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";

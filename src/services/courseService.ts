@@ -1,41 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { CourseDetails, Lesson, LessonContent, convertLessonContentToJson } from "@/types/course";
 
-export interface CourseDetails {
-  title: string;
-  description: string | null;
-  category: string;
-  level: string;
-  featuredImage: string | null;
-  published: boolean;
-}
-
-export interface LessonContent {
-  id: string;
-  type: string;
-  content: string;
-}
-
-export interface Lesson {
-  id?: string;
-  title: string;
-  content: LessonContent[];
-  order_index: number;
-  course_id?: string;
-}
-
-// Helper function to convert LessonContent to JSON
-const convertLessonContentToJson = (content: LessonContent[]): Json => {
-  // Convert the array to a plain object array that matches Json type
-  const jsonContent = content.map(item => ({
-    id: item.id,
-    type: item.type,
-    content: item.content
-  }));
-  
-  // Cast the result to Json type since we know the structure is compatible
-  return jsonContent as unknown as Json;
-};
+export { CourseDetails, Lesson, LessonContent };
 
 export const createCourse = async (courseDetails: CourseDetails, instructorId: string) => {
   console.log("Creating course with details:", courseDetails);

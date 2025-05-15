@@ -4,13 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Plus, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { useCourseContext } from "@/context/CourseContext";
-
-interface Lesson {
-  id: string;
-  title: string;
-  content: any;
-  order_index: number;
-}
+import { Lesson } from "@/types/course";
 
 interface LessonsSidebarProps {
   lessons: Lesson[];
