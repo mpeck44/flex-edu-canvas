@@ -29,7 +29,12 @@ const StudentCourseView = () => {
         if (enrollment) {
           setEnrolled(true);
           setEnrollmentId(enrollment.id);
-          setProgress(enrollment.progress_json || {});
+          // Ensure progress_json is treated as an object
+          if (enrollment.progress_json && typeof enrollment.progress_json === 'object') {
+            setProgress(enrollment.progress_json as Record<string, any>);
+          } else {
+            setProgress({});
+          }
         }
       } catch (error) {
         console.error("Error checking enrollment:", error);
@@ -75,7 +80,12 @@ const StudentCourseView = () => {
     onSuccess: (data) => {
       setEnrolled(true);
       setEnrollmentId(data.id);
-      setProgress(data.progress_json || {});
+      // Ensure progress_json is treated as an object
+      if (data.progress_json && typeof data.progress_json === 'object') {
+        setProgress(data.progress_json as Record<string, any>);
+      } else {
+        setProgress({});
+      }
       toast({
         title: "Success",
         description: "You have successfully enrolled in this course!",

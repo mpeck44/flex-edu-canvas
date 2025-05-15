@@ -4,6 +4,7 @@ import { CourseDetails, Lesson as LessonType, LessonContent } from "@/services/c
 import { useParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { getCourseById, getLessonsByCourseId } from "@/services/courseService";
+import { Json } from "@/integrations/supabase/types";
 
 interface Lesson {
   id: string;
@@ -35,6 +36,34 @@ export const CourseContext = createContext<CourseContextType | undefined>(undefi
 interface CourseProviderProps {
   children: ReactNode;
 }
+
+// Helper function to safely transform Json to LessonContent array
+const transformToLessonContent = (content: Json | null): LessonContent[] => {
+  if (!content) return [];
+  
+  // If content is an array, map each item to ensure it has the required structure
+  if (Array.isArray(content)) {
+    return content.map(item => {
+      // Ensure each item has id, type, and content properties
+      if (typeof item === 'object' && item !== null && 'id' in item && 'type' in item && 'content' in item) {
+        return {
+          id: String(item.id),
+          type: String(item.type),
+          content: String(item.content)
+        };
+      }
+      // Fallback for any item that doesn't match our structure
+      return {
+        id: `block-${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+        type: 'text',
+        content: typeof item === 'string' ? item : JSON.stringify(item)
+      };
+    });
+  }
+  
+  // If it's not an array, return an empty array
+  return [];
+};
 
 export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -73,9 +102,9 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
           
           setCourseDetails({
             title: courseData.title,
-            description: courseData.description,
-            category: courseData.category,
-            level: courseData.level,
+            description: courseData.description || "",
+            category: courseData.category || "",
+            level: courseData.level || "",
             featuredImage: courseData.featured_image,
             published: courseData.is_published
           });
@@ -85,13 +114,13 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
             const formattedLessons = courseData.lessons.map(lesson => ({
               id: lesson.id,
               title: lesson.title,
-              content: lesson.content as LessonContent[] || [],
+              content: transformToLessonContent(lesson.content),
               order_index: lesson.order_index
             }));
             
             setLessons(formattedLessons);
             setActiveLesson(formattedLessons[0].id);
-            setContentBlocks(formattedLessons[0].content || []);
+            setContentBlocks(transformToLessonContent(formattedLessons[0].content));
           }
         } catch (error) {
           console.error("Error loading course:", error);

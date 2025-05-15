@@ -11,6 +11,42 @@ import { toast } from "@/components/ui/use-toast";
 import { getStudentEnrollment, updateLessonProgress } from "@/services/courseService";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, CheckCircle, BookOpen, ArrowRight } from 'lucide-react';
+import { Json } from "@/integrations/supabase/types";
+
+// Type definition for lesson content blocks
+interface ContentBlock {
+  type: string;
+  content: string;
+  id: string;
+}
+
+// Helper function to safely transform Json to ContentBlock array
+const transformToContentBlocks = (content: Json | null): ContentBlock[] => {
+  if (!content) return [];
+  
+  // If content is an array, map each item to ensure it has the required structure
+  if (Array.isArray(content)) {
+    return content.map(item => {
+      // Ensure each item has id, type, and content properties
+      if (typeof item === 'object' && item !== null && 'id' in item && 'type' in item && 'content' in item) {
+        return {
+          id: String(item.id),
+          type: String(item.type),
+          content: String(item.content)
+        };
+      }
+      // Fallback for any item that doesn't match our structure
+      return {
+        id: `block-${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+        type: 'text',
+        content: typeof item === 'string' ? item : JSON.stringify(item)
+      };
+    });
+  }
+  
+  // If it's not an array, return an empty array
+  return [];
+};
 
 const CoursePlayer = () => {
   const { courseId, lessonId } = useParams<{ courseId: string, lessonId: string }>();
@@ -32,8 +68,12 @@ const CoursePlayer = () => {
           setEnrollmentId(enrollment.id);
           
           // Check if this lesson is already marked as completed
-          if (enrollment.progress_json && enrollment.progress_json[lessonId!]) {
-            setIsLessonCompleted(enrollment.progress_json[lessonId!].completed);
+          if (enrollment.progress_json && 
+              typeof enrollment.progress_json === 'object' && 
+              enrollment.progress_json !== null && 
+              lessonId && 
+              enrollment.progress_json[lessonId]) {
+            setIsLessonCompleted(!!enrollment.progress_json[lessonId].completed);
           }
         } else {
           // Not enrolled, redirect to course page
@@ -141,7 +181,7 @@ const CoursePlayer = () => {
   if (!lessonData) return <div>Lesson not found</div>;
 
   const { lesson, navigation } = lessonData;
-  const lessonContent = lesson.content || [];
+  const lessonContent = transformToContentBlocks(lesson.content);
 
   return (
     <MainLayout>
