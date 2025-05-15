@@ -271,6 +271,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_course: {
+        Args: {
+          p_title: string
+          p_description: string
+          p_instructor_id: string
+          p_category: string
+          p_level: string
+          p_is_published?: boolean
+        }
+        Returns: string
+      }
       is_instructor: {
         Args: { user_id: string }
         Returns: boolean

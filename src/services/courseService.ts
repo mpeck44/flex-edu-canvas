@@ -10,35 +10,74 @@ export interface CourseDetails {
 }
 
 export const createCourse = async (courseDetails: CourseDetails, instructorId: string) => {
-  // Use RPC to call a stored function instead of direct table access
-  // This bypasses RLS policies that might be causing recursion issues
-  const { data, error } = await supabase.rpc(
-    'create_course' as any, // Use type assertion to bypass TypeScript checking
-    {
-      p_title: courseDetails.title,
-      p_description: courseDetails.description,
-      p_instructor_id: instructorId,
-      p_category: courseDetails.category,
-      p_level: courseDetails.level,
-      p_is_published: false
-    }
-  );
+  console.log("Creating course with details:", courseDetails);
+  
+  try {
+    // Use RPC to call a stored function that bypasses RLS policies
+    const { data, error } = await supabase.rpc(
+      'create_course' as any, // Use type assertion to bypass TypeScript checking
+      {
+        p_title: courseDetails.title,
+        p_description: courseDetails.description,
+        p_instructor_id: instructorId,
+        p_category: courseDetails.category,
+        p_level: courseDetails.level,
+        p_is_published: false
+      }
+    );
 
-  if (error) {
-    console.error("Error in create_course RPC:", error);
+    if (error) {
+      console.error("Error in create_course RPC:", error);
+      throw error;
+    }
+    
+    console.log("Course created successfully with ID:", data);
+    return data;
+  } catch (error) {
+    console.error("Failed to create course:", error);
     throw error;
   }
-  
-  return data;
 };
 
 export const getCourseById = async (courseId: string) => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('id', courseId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', courseId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching course by ID:", error);
+      throw error;
+    }
     
-  if (error) throw error;
-  return data;
+    return data;
+  } catch (error) {
+    console.error("Failed to get course by ID:", error);
+    throw error;
+  }
+};
+
+export const getCoursesByInstructor = async (instructorId: string) => {
+  try {
+    console.log("Fetching courses for instructor:", instructorId);
+    
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('instructor_id', instructorId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching instructor courses:", error);
+      throw error;
+    }
+    
+    console.log("Fetched courses:", data);
+    return data || [];
+  } catch (error) {
+    console.error("Failed to fetch instructor courses:", error);
+    throw error;
+  }
 };

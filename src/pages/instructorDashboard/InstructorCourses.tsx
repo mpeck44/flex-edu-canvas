@@ -6,53 +6,59 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Pencil, Plus, Loader2 } from "lucide-react";
+import { Eye, Pencil, Plus, Loader2, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
+import { getCoursesByInstructor } from "@/services/courseService";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+interface Course {
+  id: string;
+  title: string;
+  students?: number;
+  modules?: number;
+  lessons?: number;
+  published: boolean;
+  lastUpdated: string;
+}
 
 const InstructorCourses = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
+        setError(null);
         console.log("Fetching courses for instructor:", user.id);
         
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .eq('instructor_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error("Error fetching courses:", error);
-          throw error;
-        }
-        
-        console.log("Fetched courses:", data);
+        const coursesData = await getCoursesByInstructor(user.id);
         
         // Transform the data to match our UI format
-        const formattedCourses = data.map(course => ({
+        const formattedCourses: Course[] = coursesData.map(course => ({
           id: course.id,
           title: course.title,
           students: 0, // We'll need another query to count enrolled students
           modules: 0, // We'll need another query to count modules
           lessons: 0, // We'll need another query to count lessons
           published: course.is_published || false,
-          lastUpdated: new Date(course.updated_at).toISOString().split('T')[0]
+          lastUpdated: new Date(course.updated_at).toLocaleDateString()
         }));
 
         setCourses(formattedCourses);
       } catch (error) {
         console.error("Error fetching courses:", error);
+        setError("Failed to load your courses. Please try again.");
         toast({
           title: "Error",
           description: "Failed to load your courses. Please try again.",
@@ -82,6 +88,14 @@ const InstructorCourses = () => {
             </Link>
           </Button>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>
@@ -129,9 +143,9 @@ const InstructorCourses = () => {
                           <Badge variant="outline">Draft</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">{course.students}</TableCell>
-                      <TableCell className="text-center">{course.modules}</TableCell>
-                      <TableCell className="text-center">{course.lessons}</TableCell>
+                      <TableCell className="text-center">{course.students || 0}</TableCell>
+                      <TableCell className="text-center">{course.modules || 0}</TableCell>
+                      <TableCell className="text-center">{course.lessons || 0}</TableCell>
                       <TableCell>{course.lastUpdated}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button variant="ghost" size="icon" asChild>
