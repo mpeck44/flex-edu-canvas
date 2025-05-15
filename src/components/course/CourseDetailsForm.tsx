@@ -5,23 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Image, Save } from "lucide-react";
+import { Image } from "lucide-react";
+import { useCourseContext } from "@/context/CourseContext";
 
-interface CourseDetails {
-  title: string;
-  description: string;
-  category: string;
-  level: string;
-  featuredImage: string | null;
-}
-
-interface CourseDetailsFormProps {
-  courseDetails: CourseDetails;
-  onSave: () => void;
-  onChange: (field: keyof CourseDetails, value: string) => void;
-}
-
-export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDetailsFormProps) => {
+export const CourseDetailsForm = () => {
+  const { courseDetails, updateCourseDetails } = useCourseContext();
+  
   return (
     <Card>
       <CardHeader>
@@ -37,7 +26,7 @@ export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDet
             id="title" 
             placeholder="e.g., Introduction to Biology"
             value={courseDetails.title}
-            onChange={(e) => onChange('title', e.target.value)}
+            onChange={(e) => updateCourseDetails('title', e.target.value)}
           />
         </div>
 
@@ -48,7 +37,7 @@ export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDet
             placeholder="Describe what students will learn"
             rows={4}
             value={courseDetails.description}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(e) => updateCourseDetails('description', e.target.value)}
           />
         </div>
 
@@ -57,7 +46,7 @@ export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDet
             <Label htmlFor="category">Category</Label>
             <Select 
               value={courseDetails.category}
-              onValueChange={(value) => onChange('category', value)}
+              onValueChange={(value) => updateCourseDetails('category', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
@@ -77,7 +66,7 @@ export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDet
             <Label htmlFor="level">Difficulty Level</Label>
             <Select 
               value={courseDetails.level}
-              onValueChange={(value) => onChange('level', value)}
+              onValueChange={(value) => updateCourseDetails('level', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select level" />
@@ -107,10 +96,7 @@ export const CourseDetailsForm = ({ courseDetails, onSave, onChange }: CourseDet
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline">Cancel</Button>
-        <Button onClick={onSave}>
-          <Save className="h-4 w-4 mr-2" />
-          Save Course Details
-        </Button>
+        <Button>Save Course Details</Button>
       </CardFooter>
     </Card>
   );
