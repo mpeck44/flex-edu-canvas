@@ -71,6 +71,14 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
     };
     setLessons([...lessons, newLesson]);
     setActiveLesson(newLesson.id);
+    
+    // Clear content blocks when switching to a new lesson
+    setContentBlocks([{ 
+      id: `block-${Date.now()}`, 
+      type: "text", 
+      content: "", 
+      order: 1 
+    }]);
   };
 
   const handleAddContentBlock = (type: string) => {
@@ -89,10 +97,31 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
         block.id === id ? { ...block, content } : block
       )
     );
+    
+    // Also update the lesson content
+    const activeLesson = lessons.find(lesson => lesson.id === activeLesson);
+    if (activeLesson) {
+      const updatedContent = contentBlocks
+        .map(block => block.content)
+        .join('\n\n');
+      
+      setLessons(lessons.map(lesson => 
+        lesson.id === activeLesson 
+          ? { ...lesson, content: updatedContent } 
+          : lesson
+      ));
+    }
   };
 
   const deleteBlock = (id: string) => {
-    setContentBlocks(contentBlocks.filter(block => block.id !== id));
+    if (contentBlocks.length <= 1) {
+      // Don't delete the last block, just clear it
+      setContentBlocks([
+        { id: contentBlocks[0].id, type: "text", content: "", order: 1 }
+      ]);
+    } else {
+      setContentBlocks(contentBlocks.filter(block => block.id !== id));
+    }
   };
 
   const updateLessonTitle = (title: string) => {

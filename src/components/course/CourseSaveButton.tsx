@@ -13,7 +13,7 @@ export const CourseSaveButton = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { courseDetails } = useCourseContext();
+  const { courseDetails, lessons } = useCourseContext();
 
   const handleSaveCourse = async () => {
     if (!courseDetails.title) {
@@ -43,14 +43,15 @@ export const CourseSaveButton = () => {
         level: courseDetails.level
       });
 
-      const course = await createCourse(courseDetails, user.id);
-      console.log("Course saved successfully:", course);
+      const courseId = await createCourse(courseDetails, user.id);
+      console.log("Course saved successfully:", courseId);
       
       toast({
         title: "Course saved",
         description: "Your course has been saved successfully.",
       });
       
+      // Navigate to the course list
       navigate('/instructor/courses');
     } catch (error) {
       console.error("Error saving course:", error);

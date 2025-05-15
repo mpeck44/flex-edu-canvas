@@ -15,7 +15,7 @@ export const createCourse = async (courseDetails: CourseDetails, instructorId: s
   try {
     // Use RPC to call a stored function that bypasses RLS policies
     const { data, error } = await supabase.rpc(
-      'create_course' as any, // Use type assertion to bypass TypeScript checking
+      'create_course',
       {
         p_title: courseDetails.title,
         p_description: courseDetails.description,
@@ -41,6 +41,7 @@ export const createCourse = async (courseDetails: CourseDetails, instructorId: s
 
 export const getCourseById = async (courseId: string) => {
   try {
+    // Use the direct table access with RLS policies applied
     const { data, error } = await supabase
       .from('courses')
       .select('*')
@@ -63,6 +64,7 @@ export const getCoursesByInstructor = async (instructorId: string) => {
   try {
     console.log("Fetching courses for instructor:", instructorId);
     
+    // Directly fetch instructor's courses using the RLS policy
     const { data, error } = await supabase
       .from('courses')
       .select('*')
@@ -74,7 +76,6 @@ export const getCoursesByInstructor = async (instructorId: string) => {
       throw error;
     }
     
-    console.log("Fetched courses:", data);
     return data || [];
   } catch (error) {
     console.error("Failed to fetch instructor courses:", error);
