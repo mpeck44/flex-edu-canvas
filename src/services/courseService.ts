@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface CourseDetails {
   title: string;
@@ -21,6 +22,11 @@ export interface Lesson {
   content: LessonContent[];
   position: number;
 }
+
+// Helper function to convert LessonContent to JSON
+const convertLessonContentToJson = (content: LessonContent[]): Json => {
+  return content as unknown as Json;
+};
 
 export const createCourse = async (courseDetails: CourseDetails, instructorId: string) => {
   console.log("Creating course with details:", courseDetails);
@@ -61,7 +67,7 @@ export const createLesson = async (courseId: string, lesson: Lesson) => {
       .insert({
         course_id: courseId,
         title: lesson.title,
-        content: lesson.content,
+        content: convertLessonContentToJson(lesson.content),
         position: lesson.position
       })
       .select()
@@ -81,13 +87,15 @@ export const createLesson = async (courseId: string, lesson: Lesson) => {
 
 export const updateLesson = async (lessonId: string, updates: Partial<Lesson>) => {
   try {
+    const updateData: any = {};
+    
+    if (updates.title) updateData.title = updates.title;
+    if (updates.position) updateData.position = updates.position;
+    if (updates.content) updateData.content = convertLessonContentToJson(updates.content);
+    
     const { data, error } = await supabase
       .from('lessons')
-      .update({
-        title: updates.title,
-        content: updates.content,
-        position: updates.position
-      })
+      .update(updateData)
       .eq('id', lessonId)
       .select()
       .single();
@@ -152,7 +160,7 @@ export const getCoursesByInstructor = async (instructorId: string) => {
     // Directly fetch instructor's courses using the RLS policy
     const { data, error } = await supabase
       .from('courses')
-      .select('*, lessons(count)')
+      .select('*, lessons(*)')
       .eq('instructor_id', instructorId)
       .order('created_at', { ascending: false });
 

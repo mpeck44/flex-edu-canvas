@@ -48,7 +48,7 @@ const InstructorCourses = () => {
           id: course.id,
           title: course.title,
           students: 0, // We'll need another query to count enrolled students
-          lessons: course.lessons.count || 0,
+          lessons: course.lessons?.length || 0,
           published: course.is_published || false,
           lastUpdated: new Date(course.updated_at).toLocaleDateString()
         }));

@@ -6,8 +6,8 @@ import { Plus } from "lucide-react";
 interface Lesson {
   id: string;
   title: string;
-  content: string;
-  order: number;
+  content: any;
+  position: number;
 }
 
 interface LessonsSidebarProps {

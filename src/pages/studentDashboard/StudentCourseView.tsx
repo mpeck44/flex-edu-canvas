@@ -23,11 +23,7 @@ const StudentCourseView = () => {
           id, 
           title, 
           description, 
-          lessons:modules(
-            id, 
-            title, 
-            lessons(id, title, order_index)
-          )
+          lessons(id, title, position)
         `)
         .eq('id', courseId)
         .single();
@@ -99,23 +95,26 @@ const StudentCourseView = () => {
               </Button>
             ) : (
               <div className="space-y-4 mt-4">
-                {courseDetails.lessons.map((module) => (
-                  <div key={module.id} className="space-y-2">
-                    <h3 className="font-semibold">{module.title}</h3>
-                    {module.lessons.map((lesson) => (
-                      <Card key={lesson.id} className="p-4">
-                        <div className="flex justify-between items-center">
-                          <span>{lesson.title}</span>
-                          <Button asChild>
-                            <Link to={`/course/${courseId}/lesson/${lesson.id}`}>
-                              Start Lesson
-                            </Link>
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
+                {courseDetails.lessons && courseDetails.lessons.length > 0 ? (
+                  <div className="space-y-2">
+                    {courseDetails.lessons
+                      .sort((a, b) => a.position - b.position)
+                      .map((lesson) => (
+                        <Card key={lesson.id} className="p-4">
+                          <div className="flex justify-between items-center">
+                            <span>{lesson.title}</span>
+                            <Button asChild>
+                              <Link to={`/course/${courseId}/lesson/${lesson.id}`}>
+                                Start Lesson
+                              </Link>
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
                   </div>
-                ))}
+                ) : (
+                  <p>This course doesn't have any lessons yet.</p>
+                )}
               </div>
             )}
           </CardContent>
