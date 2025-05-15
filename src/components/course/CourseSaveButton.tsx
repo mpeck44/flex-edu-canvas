@@ -56,11 +56,13 @@ export const CourseSaveButton = () => {
         const savedLessonsPromises = lessons.map(lesson => {
           if (lesson.id.startsWith('temp-')) {
             // New lesson - create it
-            return createLesson(window.location.pathname.split('/').pop()!, {
+            const newLesson = {
+              id: lesson.id,
               title: lesson.title,
               content: lesson.content,
               order_index: lesson.order_index
-            });
+            };
+            return createLesson(window.location.pathname.split('/').pop()!, newLesson);
           } else {
             // Existing lesson - update it
             return updateLesson(lesson.id, {
@@ -82,13 +84,15 @@ export const CourseSaveButton = () => {
         // Step 2: Create each lesson for the course
         const sortedLessons = [...lessons].sort((a, b) => a.order_index - b.order_index);
         
-        const savedLessonsPromises = sortedLessons.map((lesson, index) => 
-          createLesson(courseId, {
+        const savedLessonsPromises = sortedLessons.map((lesson) => {
+          const newLesson = {
+            id: lesson.id,
             title: lesson.title,
             content: lesson.content,
-            order_index: index
-          })
-        );
+            order_index: lesson.order_index
+          };
+          return createLesson(courseId, newLesson);
+        });
         
         await Promise.all(savedLessonsPromises);
         console.log("All lessons saved successfully");

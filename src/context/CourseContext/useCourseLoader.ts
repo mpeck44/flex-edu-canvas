@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { getCourseById } from "@/services/courseService";
-import { CourseDetails, Lesson, transformToLessonContent } from "@/types/course";
+import { CourseDetails, Lesson, LessonContent, transformToLessonContent } from "@/types/course";
 
 export const useCourseLoader = () => {
   const { courseId } = useParams<{ courseId: string }>();
