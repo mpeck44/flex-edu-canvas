@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { createCourse } from "@/services/courseService";
+import { createCourse, createLesson } from "@/services/courseService";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,8 +43,21 @@ export const CourseSaveButton = () => {
         level: courseDetails.level
       });
 
+      // Step 1: Create the course
       const courseId = await createCourse(courseDetails, user.id);
-      console.log("Course saved successfully:", courseId);
+      console.log("Course saved successfully with ID:", courseId);
+      
+      // Step 2: Create each lesson for the course
+      const savedLessonsPromises = lessons.map(lesson => 
+        createLesson(courseId, {
+          title: lesson.title,
+          content: lesson.content,
+          position: lesson.position
+        })
+      );
+      
+      await Promise.all(savedLessonsPromises);
+      console.log("All lessons saved successfully");
       
       toast({
         title: "Course saved",

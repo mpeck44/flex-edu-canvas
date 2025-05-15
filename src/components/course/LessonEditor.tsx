@@ -10,7 +10,6 @@ interface ContentBlock {
   id: string;
   type: string;
   content: string;
-  order: number;
 }
 
 interface LessonEditorProps {

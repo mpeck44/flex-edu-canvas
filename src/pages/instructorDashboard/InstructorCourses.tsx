@@ -17,7 +17,6 @@ interface Course {
   id: string;
   title: string;
   students?: number;
-  modules?: number;
   lessons?: number;
   published: boolean;
   lastUpdated: string;
@@ -49,8 +48,7 @@ const InstructorCourses = () => {
           id: course.id,
           title: course.title,
           students: 0, // We'll need another query to count enrolled students
-          modules: 0, // We'll need another query to count modules
-          lessons: 0, // We'll need another query to count lessons
+          lessons: course.lessons.count || 0,
           published: course.is_published || false,
           lastUpdated: new Date(course.updated_at).toLocaleDateString()
         }));
@@ -126,7 +124,6 @@ const InstructorCourses = () => {
                     <TableHead>Course Name</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-center">Students</TableHead>
-                    <TableHead className="text-center">Modules</TableHead>
                     <TableHead className="text-center">Lessons</TableHead>
                     <TableHead>Last Updated</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -144,7 +141,6 @@ const InstructorCourses = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-center">{course.students || 0}</TableCell>
-                      <TableCell className="text-center">{course.modules || 0}</TableCell>
                       <TableCell className="text-center">{course.lessons || 0}</TableCell>
                       <TableCell>{course.lastUpdated}</TableCell>
                       <TableCell className="text-right space-x-2">
