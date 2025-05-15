@@ -1,7 +1,7 @@
 
 import { LessonsSidebar } from "@/components/course/LessonsSidebar";
 import { LessonEditor } from "@/components/course/LessonEditor";
-import { useCourseContext } from "@/context/CourseContext";
+import { useCourseContext } from "@/context/CourseContext/CourseContext";
 
 export const CourseContentTab = () => {
   const { 

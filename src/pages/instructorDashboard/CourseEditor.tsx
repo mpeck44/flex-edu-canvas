@@ -5,7 +5,7 @@ import CoursesSidebar from "@/components/layout/CoursesSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams } from "react-router-dom";
 import { CourseDetailsForm } from "@/components/course/CourseDetailsForm";
-import { CourseProvider } from "@/context/CourseContext";
+import { CourseProvider } from "@/context/CourseContext/CourseProvider";
 import { CourseEditorHeader } from "@/components/course/CourseEditorHeader";
 import { CourseContentTab } from "@/components/course/CourseContentTab";
 import { CourseSaveButton } from "@/components/course/CourseSaveButton";

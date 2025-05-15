@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Plus, GripVertical } from "lucide-react";
 import { useState } from "react";
-import { useCourseContext } from "@/context/CourseContext";
+import { useCourseContext } from "@/context/CourseContext/CourseContext";
 import { Lesson } from "@/types/course";
 
 interface LessonsSidebarProps {

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -5,7 +6,7 @@ import { createCourse, createLesson, updateLesson, updateCoursePublishStatus } f
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCourseContext } from "@/context/CourseContext";
+import { useCourseContext } from "@/context/CourseContext/CourseContext";
 
 export const CourseSaveButton = () => {
   const [isSaving, setIsSaving] = useState(false);
