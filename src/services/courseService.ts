@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -27,7 +26,15 @@ export interface Lesson {
 
 // Helper function to convert LessonContent to JSON
 const convertLessonContentToJson = (content: LessonContent[]): Json => {
-  return content as unknown as Json;
+  // Convert the array to a plain object array that matches Json type
+  const jsonContent = content.map(item => ({
+    id: item.id,
+    type: item.type,
+    content: item.content
+  }));
+  
+  // Cast the result to Json type since we know the structure is compatible
+  return jsonContent as unknown as Json;
 };
 
 export const createCourse = async (courseDetails: CourseDetails, instructorId: string) => {

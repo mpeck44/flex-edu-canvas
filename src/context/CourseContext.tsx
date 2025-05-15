@@ -65,6 +65,19 @@ const transformToLessonContent = (content: Json | null): LessonContent[] => {
   return [];
 };
 
+// Helper function to convert LessonContent to Json
+const convertLessonContentToJson = (content: LessonContent[]): Json => {
+  // Convert the array to a plain object array that matches Json type
+  const jsonContent = content.map(item => ({
+    id: item.id,
+    type: item.type,
+    content: item.content
+  }));
+  
+  // Cast the result to Json type since we know the structure is compatible
+  return jsonContent as unknown as Json;
+};
+
 export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
   const { courseId } = useParams<{ courseId: string }>();
   const isExistingCourse = !!courseId && courseId !== 'new';
@@ -172,7 +185,10 @@ export const CourseProvider: React.FC<CourseProviderProps> = ({ children }) => {
     // Update lesson content immediately
     const updatedLessons = lessons.map(lesson => 
       lesson.id === activeLesson 
-        ? { ...lesson, content: [...contentBlocks, newBlock] } 
+        ? { 
+            ...lesson, 
+            content: [...contentBlocks, newBlock]
+          } 
         : lesson
     );
     setLessons(updatedLessons);
